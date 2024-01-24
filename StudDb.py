@@ -1,79 +1,53 @@
-from StudDbEntry import StudDbEntry
+import sqlite3
 
-class StudDb:
-    def __init__(self, class_number, name, gender, college_department, course):
-        self.class_number = class_number
-        self.name = name
-        self.gender = gender
-        self.college_department = college_department
-        self.course = course
+def create_table():
+    conn = sqlite3.connect('Students.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+            CREATE TABLE IF NOT EXISTS Students (
+            class_number INTEGER PRIMARY, 
+            name TEXT,
+            gender TEXT)''')
+    conn.commit()
+    conn.close()
 
-class StudentDatabase:
-    def __init__(self, db_name='student.db'):
-        self.conn = StudDbEntry.connect(db_name)
-        self.cursor = self.conn.cursor()
-        self.create_table()
+def fetch_students():
+    conn = sqlite3.connect('Students.db')
+    cursor = conn.cursor()
+    cursor.execute ('SELECT * FROM Students')
+    Students = cursor.fetchall()
+    conn.close()
+    return Students
 
-    def create_table(self):
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS students (
-                class_number INTEGER PRIMARY KEY,
-                name TEXT,
-                gender TEXT,
-                college_department
-                course TEXT
-            )
-        ''')
-        self.conn.commit()
+def insert_student(class_number, name, gender):
+    conn = sqlite3.connect('Students.db')
+    cursor =conn.cursor()
+    cursor.execute ('INSERT INTO Students (class_number, name, gender) VALUES (?, ?, ?)', 
+                    (class_number, name, gender))
+    conn.commit()
+    conn.close()
 
-    def create_entry(self, stud_entry):
-        self.cursor.execute('''
-            INSERT INTO students (class_number, name, gender, college_department, course)
-            VALUES (?, ?, ?, ?)
-        ''', (stud_entry.class_number, stud_entry.name, stud_entry.gender, stud_entry.college_department, stud_entry.course))
-        self.conn.commit()
+def delete_student(class_number):
+    conn = sqlite3.connect('Students.db')
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM Students WHERE class_number = ?', (class_number,))
+    conn.commit()
+    conn.close()
 
-    def read_entry(self, class_number):
-        self.cursor.execute('SELECT * FROM students WHERE class_number = ?', (class_number,))
-        return self.cursor.fetchone()
+def update_product(new_name, new_gender, class_number):
+    conn = sqlite3.connect('Students.db')
+    cursor = conn.cursor()
+    cursor.execute ('UPDATE Students SET name = ?, gender = ? WHERE class_number = ?',
+                    (new_name, new_gender, class_number))
+    conn.commit()
+    conn.close()
 
-    def update_entry(self, stud_entry):
-        self.cursor.execute('''
-            UPDATE students
-            SET name=?, gender=?, college_department=?, course=?
-            WHERE class_number=?
-        ''', (stud_entry.name, stud_entry.gender, stud_entry.college_department, stud_entry.course ,stud_entry.class_number))
-        self.conn.commit()
+def class_number_exists(class_number):
+    conn = sqlite3.connect('Students.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT COUNT(*) FROM Students WHERE class_number = ?', (class_number))
+    result = cursor.fetchone()
+    conn.close()
+    return result [0] > 0
 
-    def delete_entry(self, class_number):
-        self.cursor.execute('DELETE FROM students WHERE class_number = ?', (class_number,))
-        self.conn.commit()
-
-def main():
-    student_db = StudentDatabase()
-
-    # Create an entry
-    new_student = StudDbEntry(class_number=1, name='Anne Hathaway', gender='Female', college_department='Engineering', course='Electronics Engineering')
-    student_db.create_entry(new_student)
-
-    # Read the entry
-    retrieved_student = student_db.read_entry(class_number=1)
-    print("Read Entry:", retrieved_student)
-
-    # Update the entry
-    updated_student = StudDbEntry(class_number=1, name='Anne Updated', gender='Female', college_department='Engineering', course='Electronics Engineering')
-    student_db.update_entry(updated_student)
-
-    # Read the updated entry
-    updated_retrieved_student = student_db.read_entry(class_number=1)
-    print("Updated Entry:", updated_retrieved_student)
-
-    # Delete the entry
-    student_db.delete_entry(class_number=1)
-
-    # Read after deletion
-    deleted_retrieved_student = student_db.read_entry(class_number=1)
-    print("Deleted Entry:", deleted_retrieved_student)
-
-if __name__ == "__main__":
-    main()
+#create_table()
